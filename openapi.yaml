@@ -1,0 +1,815 @@
+openapi: 3.0.3
+info:
+  title: University Job Service API
+  description: API для сервиса поиска работы и стажировок в университете.
+  version: 2.0.0
+servers:
+  - url: http://localhost:8080
+    description: Локальный сервер разработки
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id: { type: integer }
+        email: { type: string }
+        full_name: { type: string }
+        role: { type: string, enum: [student, employer, admin] }
+
+    StudentProfile:
+      type: object
+      properties:
+        id: { type: integer }
+        user_id: { type: integer }
+        phone: { type: string }
+        university: { type: string }
+        faculty: { type: string }
+        course: { type: integer }
+        skills: { type: string }
+        languages: { type: string }
+        about: { type: string }
+
+    EmployerProfile:
+      type: object
+      properties:
+        id: { type: integer }
+        user_id: { type: integer }
+        company_name: { type: string }
+        company_description: { type: string }
+        phone: { type: string }
+        website: { type: string }
+
+    JobVacancy:
+      type: object
+      properties:
+        id: { type: integer }
+        employer_id: { type: integer }
+        title: { type: string }
+        description: { type: string }
+        requirements: { type: string }
+        employment_type: { type: string, enum: [part-time, full-time, internship] }
+        salary_range: { type: string }
+
+    JobApplication:
+      type: object
+      properties:
+        id: { type: integer }
+        job_vacancy_id: { type: integer }
+        student_profile_id: { type: integer }
+        resume_id: { type: integer }
+        cover_letter: { type: string }
+        status: { type: string, enum: [new, reviewed, rejected, accepted] }
+
+    Review:
+      type: object
+      properties:
+        id: { type: integer }
+        student_profile_id: { type: integer }
+        employer_id: { type: integer }
+        review_type: { type: string, enum: [student_to_employer, employer_to_student] }
+        rating: { type: integer }
+        text: { type: string }
+
+    Interview:
+      type: object
+      properties:
+        id: { type: integer }
+        job_application_id: { type: integer }
+        student_profile_id: { type: integer }
+        employer_id: { type: integer }
+        start_time: { type: string, format: date-time }
+        end_time: { type: string, format: date-time }
+        status: { type: string, enum: [scheduled, completed, canceled, rescheduled] }
+        location: { type: string }
+        notes: { type: string }
+
+    Blacklist:
+      type: object
+      properties:
+        id: { type: integer }
+        user_id: { type: integer }
+        reason: { type: string }
+        banned_by: { type: integer }
+        ban_start: { type: string, format: date-time }
+        ban_end: { type: string, format: date-time }
+        permanent: { type: boolean }
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Auth
+    description: Методы аутентификации и регистрации
+  - name: Users
+    description: Управление пользователями
+  - name: Profiles
+    description: Управление профилями студентов и работодателей
+  - name: Vacancies
+    description: Управление вакансиями
+  - name: Applications
+    description: Управление заявками на вакансии
+  - name: Interviews
+    description: Управление собеседованиями
+  - name: Reviews
+    description: Управление отзывами
+  - name: Blacklist
+    description: Управление чёрными списками пользователей
+  - name: BlacklistStudents
+    description: Управление чёрным списком студентов
+  - name: BlacklistEmployers
+    description: Управление чёрным списком работодателей
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Регистрация пользователя
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201': { description: Пользователь зарегистрирован }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Авторизация пользователя
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200': { description: Успешная авторизация }
+
+  /users:
+    get:
+      tags: [Users]
+      summary: Получить всех пользователей
+      responses:
+        '200':
+          description: Список пользователей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+    post:
+      tags: [Users]
+      summary: Создать пользователя
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201': { description: Пользователь создан }
+
+  /users/{id}:
+    get:
+      tags: [Users]
+      summary: Получить пользователя по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: Данные пользователя }
+
+    put:
+      tags: [Users]
+      summary: Обновить данные пользователя
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200': { description: Данные пользователя обновлены }
+
+    delete:
+      tags: [Users]
+      summary: Удалить пользователя
+      responses:
+        '204': { description: Пользователь удалён }
+
+  /profiles/student:
+    get:
+      tags: [Profiles]
+      summary: Получить все профили студентов
+      responses:
+        '200':
+          description: Список профилей студентов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StudentProfile'
+
+    post:
+      tags: [Profiles]
+      summary: Создать профиль студента
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentProfile'
+      responses:
+        '201':
+          description: Профиль студента создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentProfile'
+
+  /profiles/student/{id}:
+    get:
+      tags: [Profiles]
+      summary: Получить профиль студента по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Данные профиля студента
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentProfile'
+
+    put:
+      tags: [Profiles]
+      summary: Обновить профиль студента
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentProfile'
+      responses:
+        '200':
+          description: Профиль студента обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentProfile'
+
+    delete:
+      tags: [Profiles]
+      summary: Удалить профиль студента
+      responses:
+        '204':
+          description: Профиль студента удалён
+
+  /profiles/employer:
+    get:
+      tags: [Profiles]
+      summary: Получить все профили работодателей
+      responses:
+        '200':
+          description: Список профилей работодателей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmployerProfile'
+
+    post:
+      tags: [Profiles]
+      summary: Создать профиль работодателя
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployerProfile'
+      responses:
+        '201':
+          description: Профиль работодателя создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerProfile'
+
+  /profiles/employer/{id}:
+    get:
+      tags: [Profiles]
+      summary: Получить профиль работодателя по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Данные профиля работодателя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerProfile'
+
+    put:
+      tags: [Profiles]
+      summary: Обновить профиль работодателя
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployerProfile'
+      responses:
+        '200':
+          description: Профиль работодателя обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployerProfile'
+
+    delete:
+      tags: [Profiles]
+      summary: Удалить профиль работодателя
+      responses:
+        '204':
+          description: Профиль работодателя удалён
+        
+  /blacklist:
+    get:
+      tags: [Blacklist]
+      summary: Получить всех заблокированных пользователей
+      responses:
+        '200':
+          description: Список заблокированных пользователей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Blacklist'
+
+    post:
+      tags: [Blacklist]
+      summary: Добавить пользователя в чёрный список
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Blacklist'
+      responses:
+        '201': { description: Пользователь добавлен в чёрный список }
+
+  /blacklist/{id}:
+    get:
+      tags: [Blacklist]
+      summary: Получить запись чёрного списка по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Запись чёрного списка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Blacklist'
+
+    put:
+      tags: [Blacklist]
+      summary: Обновить запись чёрного списка
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Blacklist'
+      responses:
+        '200': { description: Запись чёрного списка обновлена }
+
+    delete:
+      tags: [Blacklist]
+      summary: Удалить запись из чёрного списка
+      responses:
+        '204': { description: Запись удалена }
+
+  /blacklist/students:
+    get:
+      tags: [BlacklistStudents]
+      summary: Получить чёрный список студентов
+      responses:
+        '200':
+          description: Список студентов в чёрном списке
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Blacklist'
+
+    post:
+      tags: [BlacklistStudents]
+      summary: Добавить студента в чёрный список
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Blacklist'
+      responses:
+        '201': { description: Студент добавлен в чёрный список }
+
+  /blacklist/students/{id}:
+    get:
+      tags: [BlacklistStudents]
+      summary: Получить запись чёрного списка студентов по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Запись чёрного списка студентов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Blacklist'
+
+    put:
+      tags: [BlacklistStudents]
+      summary: Обновить запись чёрного списка студентов
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Blacklist'
+      responses:
+        '200': { description: Запись чёрного списка студентов обновлена }
+
+    delete:
+      tags: [BlacklistStudents]
+      summary: Удалить запись из чёрного списка студентов
+      responses:
+        '204': { description: Запись удалена }
+
+  /blacklist/employers:
+    get:
+      tags: [BlacklistEmployers]
+      summary: Получить чёрный список работодателей
+      responses:
+        '200':
+          description: Список работодателей в чёрном списке
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Blacklist'
+
+    post:
+      tags: [BlacklistEmployers]
+      summary: Добавить работодателя в чёрный список
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Blacklist'
+      responses:
+        '201': { description: Работодатель добавлен в чёрный список }
+
+  /blacklist/employers/{id}:
+    get:
+      tags: [BlacklistEmployers]
+      summary: Получить запись чёрного списка работодателей по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Запись чёрного списка работодателей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Blacklist'
+
+    put:
+      tags: [BlacklistEmployers]
+      summary: Обновить запись чёрного списка работодателей
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Blacklist'
+      responses:
+        '200': { description: Запись чёрного списка работодателей обновлена }
+
+    delete:
+      tags: [BlacklistEmployers]
+      summary: Удалить запись из чёрного списка работодателей
+      responses:
+        '204': { description: Запись удалена }
+  /interviews:
+    get:
+      tags: [Interviews]
+      summary: Получить все собеседования
+      responses:
+        '200':
+          description: Список собеседований
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Interview'
+
+    post:
+      tags: [Interviews]
+      summary: Создать собеседование
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Interview'
+      responses:
+        '201':
+          description: Собеседование создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interview'
+
+  /interviews/{id}:
+    get:
+      tags: [Interviews]
+      summary: Получить собеседование по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Данные собеседования
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interview'
+
+    put:
+      tags: [Interviews]
+      summary: Обновить данные собеседования
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Interview'
+      responses:
+        '200':
+          description: Собеседование обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interview'
+
+    delete:
+      tags: [Interviews]
+      summary: Удалить собеседование
+      responses:
+        '204':
+          description: Собеседование удалено
+
+  /reviews:
+    get:
+      tags: [Reviews]
+      summary: Получить все отзывы
+      responses:
+        '200':
+          description: Список отзывов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+
+    post:
+      tags: [Reviews]
+      summary: Создать отзыв
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Review'
+      responses:
+        '201':
+          description: Отзыв создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+
+  /reviews/{id}:
+    get:
+      tags: [Reviews]
+      summary: Получить отзыв по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Данные отзыва
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+
+    put:
+      tags: [Reviews]
+      summary: Обновить данные отзыва
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Review'
+      responses:
+        '200':
+          description: Отзыв обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+
+    delete:
+      tags: [Reviews]
+      summary: Удалить отзыв
+      responses:
+        '204':
+          description: Отзыв удалён
+    
+  /vacancies:
+    get:
+      tags: [Vacancies]
+      summary: Получить все вакансии
+      responses:
+        '200':
+          description: Список вакансий
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JobVacancy'
+
+    post:
+      tags: [Vacancies]
+      summary: Создать вакансию
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobVacancy'
+      responses:
+        '201':
+          description: Вакансия создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobVacancy'
+
+  /vacancies/{id}:
+    get:
+      tags: [Vacancies]
+      summary: Получить вакансию по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Данные вакансии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobVacancy'
+
+    put:
+      tags: [Vacancies]
+      summary: Обновить вакансию
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobVacancy'
+      responses:
+        '200':
+          description: Вакансия обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobVacancy'
+
+    delete:
+      tags: [Vacancies]
+      summary: Удалить вакансию
+      responses:
+        '204':
+          description: Вакансия удалена
+
+  /applications:
+    get:
+      tags: [Applications]
+      summary: Получить все заявки на вакансии
+      responses:
+        '200':
+          description: Список заявок
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JobApplication'
+
+    post:
+      tags: [Applications]
+      summary: Подать заявку на вакансию
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobApplication'
+      responses:
+        '201':
+          description: Заявка подана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobApplication'
+
+  /applications/{id}:
+    get:
+      tags: [Applications]
+      summary: Получить заявку по ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Данные заявки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobApplication'
+
+    put:
+      tags: [Applications]
+      summary: Обновить заявку
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobApplication'
+      responses:
+        '200':
+          description: Заявка обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobApplication'
+
+    delete:
+      tags: [Applications]
+      summary: Удалить заявку
+      responses:
+        '204':
+          description: Заявка удалена
+  
+  
+
+
