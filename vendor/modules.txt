@@ -1,0 +1,62 @@
+# github.com/fatih/color v1.18.0
+## explicit; go 1.17
+github.com/fatih/color
+# github.com/google/uuid v1.6.0
+## explicit
+github.com/google/uuid
+# github.com/jinzhu/inflection v1.0.0
+## explicit
+github.com/jinzhu/inflection
+# github.com/mattn/go-colorable v0.1.13
+## explicit; go 1.15
+github.com/mattn/go-colorable
+# github.com/mattn/go-isatty v0.0.20
+## explicit; go 1.15
+github.com/mattn/go-isatty
+# github.com/puzpuzpuz/xsync/v3 v3.4.0
+## explicit; go 1.18
+github.com/puzpuzpuz/xsync/v3
+# github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc
+## explicit
+github.com/tmthrgd/go-hex
+# github.com/uptrace/bun v1.2.5
+## explicit; go 1.22
+github.com/uptrace/bun
+github.com/uptrace/bun/dialect
+github.com/uptrace/bun/dialect/feature
+github.com/uptrace/bun/dialect/sqltype
+github.com/uptrace/bun/extra/bunjson
+github.com/uptrace/bun/internal
+github.com/uptrace/bun/internal/parser
+github.com/uptrace/bun/internal/tagparser
+github.com/uptrace/bun/migrate
+github.com/uptrace/bun/schema
+# github.com/uptrace/bun/dialect/pgdialect v1.2.5
+## explicit; go 1.22
+github.com/uptrace/bun/dialect/pgdialect
+# github.com/uptrace/bun/driver/pgdriver v1.2.5
+## explicit; go 1.22
+github.com/uptrace/bun/driver/pgdriver
+# github.com/uptrace/bun/extra/bundebug v1.2.5
+## explicit; go 1.22
+github.com/uptrace/bun/extra/bundebug
+# github.com/vmihailenco/msgpack/v5 v5.4.1
+## explicit; go 1.19
+github.com/vmihailenco/msgpack/v5
+github.com/vmihailenco/msgpack/v5/msgpcode
+# github.com/vmihailenco/tagparser/v2 v2.0.0
+## explicit; go 1.15
+github.com/vmihailenco/tagparser/v2
+github.com/vmihailenco/tagparser/v2/internal
+github.com/vmihailenco/tagparser/v2/internal/parser
+# golang.org/x/crypto v0.28.0
+## explicit; go 1.20
+golang.org/x/crypto/pbkdf2
+# golang.org/x/sys v0.26.0
+## explicit; go 1.18
+golang.org/x/sys/cpu
+golang.org/x/sys/unix
+golang.org/x/sys/windows
+# mellium.im/sasl v0.3.2
+## explicit; go 1.20
+mellium.im/sasl
