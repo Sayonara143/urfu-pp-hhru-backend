@@ -15,6 +15,8 @@ CREATE TABLE users (
 	email        TEXT UNIQUE NOT NULL,
 	full_name    TEXT NOT NULL,
 	role         TEXT NOT NULL,
+	password_hash  TEXT NOT NULL,
+    password_salt  TEXT NOT NULL,
 	created_at   TIMESTAMPTZ NOT NULL,
 	updated_at   TIMESTAMPTZ NOT NULL
 );

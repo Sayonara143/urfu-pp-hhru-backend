@@ -1,0 +1,10 @@
+app:
+  environment: dev
+  httpAddr: 0.0.0.0:8000
+storages:
+  postgres:
+    addr: localhost:5432
+    name: hh
+    user: postgres
+    pass: postgres
+    pool: 10
